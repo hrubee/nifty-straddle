@@ -22,7 +22,7 @@ from typing import Any
 
 import requests
 
-import config
+from .config import settings
 
 
 def _ctx() -> ssl.SSLContext:
@@ -79,27 +79,27 @@ class TradejiniError(Exception):
 def authorize_url(state: str) -> str:
     """The URL to send a client to so they log in on Tradejini and authorize us."""
     q = urllib.parse.urlencode({
-        "client_id": config.settings.tradejini_app_key,
-        "redirect_uri": config.settings.tradejini_redirect_uri,
+        "client_id": settings.tradejini_app_key,
+        "redirect_uri": settings.tradejini_redirect_uri,
         "response_type": "code",
         "scope": "general",
         "state": state,
     })
-    return f"{config.settings.tradejini_base_url}/api-gw/oauth/authorize?{q}"
+    return f"{settings.tradejini_base_url}/api-gw/oauth/authorize?{q}"
 
 
 def exchange_code(code: str) -> dict:
     """Exchange the redirect ``code`` for a client access token."""
     body = urllib.parse.urlencode({
         "code": code,
-        "client_id": config.settings.tradejini_app_key,
-        "redirect_uri": config.settings.tradejini_redirect_uri,
-        "client_secret": config.settings.tradejini_app_secret,
+        "client_id": settings.tradejini_app_key,
+        "redirect_uri": settings.tradejini_redirect_uri,
+        "client_secret": settings.tradejini_app_secret,
         "grant_type": "authorization_code",
     }).encode()
     # OAuth token exchange uses urllib directly (one-off, no pooling needed)
     req = urllib.request.Request(
-        f"{config.settings.tradejini_base_url}/api-gw/oauth/token", data=body, method="POST",
+        f"{settings.tradejini_base_url}/api-gw/oauth/token", data=body, method="POST",
         headers={"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"})
     try:
         resp = json.loads(urllib.request.urlopen(req, timeout=20, context=_SSL).read())
@@ -120,7 +120,7 @@ def verify_webhook_signature(raw_body: bytes, signature: str | None) -> bool:
     appended). Returns True only on an exact constant-time match."""
     if not signature:
         return False
-    secret = (config.settings.tradejini_app_secret or "").encode()
+    secret = (settings.tradejini_app_secret or "").encode()
     if not secret:
         return False
     expected = hmac.new(secret, raw_body, hashlib.sha256).hexdigest()
@@ -153,9 +153,9 @@ def individual_data_token() -> tuple[str, str] | None:
     (api_key + password + TOTP). Cached until ~5 min before expiry. Returns None
     when the data creds aren't configured OR we're in post-failure cooldown
     (caller falls back to a client token)."""
-    key = config.settings.tradejini_data_api_key.strip()
-    pw = config.settings.tradejini_data_password
-    seed = config.settings.tradejini_data_totp_secret.strip()
+    key = settings.tradejini_data_api_key.strip()
+    pw = settings.tradejini_data_password
+    seed = settings.tradejini_data_totp_secret.strip()
     if not (key and pw and seed):
         return None
     now = time.time()
@@ -166,7 +166,7 @@ def individual_data_token() -> tuple[str, str] | None:
     body = urllib.parse.urlencode({"password": pw, "twoFa": _totp_now(seed), "twoFaTyp": "totp"}).encode()
     # individual-token-v2 uses urllib directly (one-off, infrequent)
     req = urllib.request.Request(
-        f"{config.settings.tradejini_base_url}/api-gw/oauth/individual-token-v2", data=body, method="POST",
+        f"{settings.tradejini_base_url}/api-gw/oauth/individual-token-v2", data=body, method="POST",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/x-www-form-urlencoded",
                  "Accept": "application/json"})
     try:
@@ -200,7 +200,7 @@ def mint_client_token(api_key: str, password: str, two_fa: str,
                                    "twoFaTyp": (two_fa_typ or "totp")}).encode()
     # Individual token uses urllib directly (one-off, infrequent)
     req = urllib.request.Request(
-        f"{config.settings.tradejini_base_url}/api-gw/oauth/individual-token-v2", data=body, method="POST",
+        f"{settings.tradejini_base_url}/api-gw/oauth/individual-token-v2", data=body, method="POST",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/x-www-form-urlencoded",
                  "Accept": "application/json"})
     try:
@@ -226,9 +226,9 @@ class TradejiniClient:
         self.access_token = access_token
         # OAuth client tokens authorize with the APP key; data auto-login tokens
         # authorize with the data account's own api key.
-        self.api_key = api_key or config.settings.tradejini_app_key
+        self.api_key = api_key or settings.tradejini_app_key
         self._session = _get_session()
-        self._base_url = config.settings.tradejini_base_url
+        self._base_url = settings.tradejini_base_url
 
     def _headers(self, content_type: str | None = None) -> dict:
         # Tradejini's authorizing bearer is "<apiKey>:<accessToken>".
@@ -453,7 +453,7 @@ class TradejiniClient:
         # configured default. Caps how far from LTP the order may fill (slippage
         # guard on the strategy's market entries/exits/square-offs).
         if order_type.lower() in ("market", "stopmarket"):
-            data["mktProt"] = mkt_prot if mkt_prot > 0 else config.settings.tradejini_mkt_prot_pct
+            data["mktProt"] = mkt_prot if mkt_prot > 0 else settings.tradejini_mkt_prot_pct
         j = self._post("/api/oms/place-order", data)
         if j.get("s") != "ok":
             raise TradejiniError(f"order rejected: {j}")
@@ -469,7 +469,7 @@ class TradejiniClient:
         if order_type.lower() in ("stopmarket", "stoplimit") and trig_price > 0:
             data["trigPrice"] = trig_price
         if order_type.lower() in ("market", "stopmarket"):
-            data["mktProt"] = mkt_prot if mkt_prot > 0 else config.settings.tradejini_mkt_prot_pct
+            data["mktProt"] = mkt_prot if mkt_prot > 0 else settings.tradejini_mkt_prot_pct
         j = self._put("/api/oms/modify-order", data)
         if not j.get("status"):
             raise RuntimeError(j.get("message", "modify-order failed"))
@@ -536,7 +536,7 @@ class TradejiniClient:
         """Flatten the position in `sym_id`: cancel any protective stop first (so
         it can't orphan-reverse), then place the opposite order. `product`
         MUST match the open product to net the position (straddle callers pass
-        config.settings.straddle_product); defaults to "normal" for other callers.
+        settings.straddle_product); defaults to "normal" for other callers.
 
         If limit_price is provided, places an IOC LIMIT order at that price for
         bounded slippage. Otherwise uses market order with market protection."""
