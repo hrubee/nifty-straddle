@@ -1,0 +1,164 @@
+{
+  "version": "0.7",
+  "name": "NIFTY BUYING 2025",
+  "strategy": {
+    "Ticker": "NIFTY",
+    "TakeUnderlyingFromCashOrNot": "True",
+    "TrailSLtoBreakeven": "TrailSLtoBreakeven.AllLegs",
+    "SquareOffAllLegs": "False",
+    "EntryIndicators": {
+      "Type": "IndicatorTreeNodeType.OperandNode",
+      "OperandType": "OperandType.And",
+      "Value": [
+        {
+          "Type": "IndicatorTreeNodeType.DataNode",
+          "Value": {
+            "IndicatorName": "IndicatorType.TimeIndicator",
+            "Parameters": {
+              "Hour": 9,
+              "Minute": 35
+            }
+          }
+        }
+      ]
+    },
+    "ExitIndicators": {
+      "Type": "IndicatorTreeNodeType.OperandNode",
+      "OperandType": "OperandType.And",
+      "Value": [
+        {
+          "Type": "IndicatorTreeNodeType.DataNode",
+          "Value": {
+            "IndicatorName": "IndicatorType.TimeIndicator",
+            "Parameters": {
+              "Hour": 15,
+              "Minute": 20
+            }
+          }
+        }
+      ]
+    },
+    "StrategyType": "StrategyType.IntradaySameDay",
+    "MaxPositionInADay": 1,
+    "ReentryTimeRestriction": "None",
+    "SkipInitialCandles": 0,
+    "ListOfLegConfigs": [
+      {
+        "EntryType": "EntryType.EntryByPremium",
+        "ExpiryKind": "ExpiryType.Weekly",
+        "InstrumentKind": "LegType.CE",
+        "LegMomentum": {
+          "Type": "MomentumType.PercentageUp",
+          "Value": 10
+        },
+        "LegReentrySL": {
+          "Type": "ReentryType.LikeOriginal",
+          "Value": {
+            "ReentryCount": 20
+          }
+        },
+        "LegReentryTP": {
+          "Type": "None",
+          "Value": {}
+        },
+        "LegStopLoss": {
+          "Type": "LegTgtSLType.Percentage",
+          "Value": 5
+        },
+        "LegTarget": {
+          "Type": "None",
+          "Value": 0
+        },
+        "LegTrailSL": {
+          "Type": "TrailStopLossType.Percentage",
+          "Value": {
+            "InstrumentMove": 15,
+            "StopLossMove": 5
+          }
+        },
+        "LotConfig": {
+          "Type": "LotType.Quantity",
+          "Value": 1
+        },
+        "PositionType": "PositionType.Buy",
+        "StrikeParameter": 50,
+        "id": "44694ljb"
+      },
+      {
+        "EntryType": "EntryType.EntryByPremium",
+        "ExpiryKind": "ExpiryType.Weekly",
+        "InstrumentKind": "LegType.PE",
+        "LegMomentum": {
+          "Type": "MomentumType.PercentageUp",
+          "Value": 10
+        },
+        "LegReentrySL": {
+          "Type": "ReentryType.LikeOriginal",
+          "Value": {
+            "ReentryCount": 20
+          }
+        },
+        "LegReentryTP": {
+          "Type": "None",
+          "Value": {}
+        },
+        "LegStopLoss": {
+          "Type": "LegTgtSLType.Percentage",
+          "Value": 5
+        },
+        "LegTarget": {
+          "Type": "None",
+          "Value": 0
+        },
+        "LegTrailSL": {
+          "Type": "TrailStopLossType.Percentage",
+          "Value": {
+            "InstrumentMove": 15,
+            "StopLossMove": 5
+          }
+        },
+        "LotConfig": {
+          "Type": "LotType.Quantity",
+          "Value": 1
+        },
+        "PositionType": "PositionType.Buy",
+        "StrikeParameter": 50,
+        "id": "7juio9zo"
+      }
+    ],
+    "IdleLegConfigs": {},
+    "OverallMomentum": {
+      "Type": "None",
+      "Value": 0
+    },
+    "OverallSL": {
+      "Type": "None",
+      "Value": 0
+    },
+    "OverallTgt": {
+      "Type": "None",
+      "Value": 0
+    },
+    "OverallTrailSL": {
+      "Type": "None",
+      "Value": {}
+    },
+    "LockAndTrail": {
+      "Type": "None",
+      "Value": {}
+    },
+    "OverallReentrySL": {
+      "Type": "None",
+      "Value": {}
+    },
+    "OverallReentryTgt": {
+      "Type": "None",
+      "Value": {}
+    },
+    "WeeklyOldRegime": false
+  },
+  "attributes": {
+    "template": "Straddle920",
+    "positional": "False"
+  }
+}
