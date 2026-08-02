@@ -19,7 +19,7 @@ import urllib.request
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-from options_straddle import StraddleConfig, StraddleEngine
+from app.options_straddle import StraddleConfig, StraddleEngine
 
 log = logging.getLogger("straddle")
 

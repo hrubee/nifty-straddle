@@ -1,0 +1,6 @@
+# nifty-straddle — FaithfulStraddleEngine from niftybuying2025.algtst
+# Core strategy uses stdlib; Tradejini WS adds minimal deps
+requests>=2.31.0
+websocket-client>=1.6.0
+certifi>=2023.0.0
+urllib3>=2.0.0
