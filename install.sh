@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # nifty-straddle one-line VPS installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/hrubee/nifty-straddle/main/install.sh | TRADEJINI_PASSWORD="xxx" TRADEJINI_TOTP="xxx" bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/hrubee/nifty-straddle/main/install.sh |
+#   TRADEJINI_DATA_API_KEY="xxx" TRADEJINI_PASSWORD="xxx" TRADEJINI_TOTP="xxx" bash
 
 set -euo pipefail
 
@@ -9,9 +10,15 @@ INSTALL_DIR="${INSTALL_DIR:-/opt/nifty-straddle}"
 SERVICE_NAME="nifty-straddle"
 PYTHON="${PYTHON:-python3}"
 
-# Required env vars
+# Required env vars for DATA FEED (premium WS) - needed for SHADOW mode
+: "${TRADEJINI_DATA_API_KEY?TRADEJINI_DATA_API_KEY is required}"
 : "${TRADEJINI_PASSWORD?TRADEJINI_PASSWORD is required}"
 : "${TRADEJINI_TOTP?TRADEJINI_TOTP is required}"
+
+# Optional: App credentials for ORDER EXECUTION (client OAuth flow)
+# TRADEJINI_APP_KEY="xxx"
+# TRADEJINI_APP_SECRET="xxx"
+# TRADEJINI_REDIRECT_URI="https://yourdomain.com/callback"
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 err() { log "ERROR: $*" >&2; exit 1; }
@@ -55,16 +62,7 @@ fi
 log "Creating virtual environment..."
 $PYTHON -m venv "$INSTALL_DIR/.venv"
 "$INSTALL_DIR/.venv/bin/pip" install --quiet --upgrade pip
-"$INSTALL_DIR/.venv/bin/pip" install --quiet -r "$INSTALL_DIR/requirements.txt" 2>/dev/null || true
-
-# The strategy has minimal deps - just ensure stdlib works
-# Write requirements.txt if missing
-if [[ ! -f "$INSTALL_DIR/requirements.txt" ]]; then
-    cat > "$INSTALL_DIR/requirements.txt" <<'REQ'
-# nifty-straddle - minimal stdlib-only strategy
-# No external deps required for core engine
-REQ
-fi
+"$INSTALL_DIR/.venv/bin/pip" install --quiet -r "$INSTALL_DIR/requirements.txt"
 
 # Create systemd service
 log "Creating systemd service..."
@@ -79,6 +77,7 @@ Type=simple
 User=root
 WorkingDirectory=$INSTALL_DIR
 Environment=STRADDLE_DATA_SRC=tradejini
+Environment=TRADEJINI_DATA_API_KEY=$TRADEJINI_DATA_API_KEY
 Environment=TRADEJINI_PASSWORD=$TRADEJINI_PASSWORD
 Environment=TRADEJINI_TOTP=$TRADEJINI_TOTP
 Environment=PYTHONPATH=$INSTALL_DIR
@@ -110,5 +109,15 @@ log "To stop:   systemctl stop $SERVICE_NAME"
 log "To logs:   journalctl -u $SERVICE_NAME -f"
 log "To status: systemctl status $SERVICE_NAME"
 log ""
+log "Required for DATA FEED (premiums):"
+log "  TRADEJINI_DATA_API_KEY  - Data account API key"
+log "  TRADEJINI_PASSWORD      - Data account password"
+log "  TRADEJINI_TOTP          - Data account TOTP secret"
+log ""
+log "Optional for ORDER EXECUTION (live trading):"
+log "  TRADEJINI_APP_KEY       - OAuth app key"
+log "  TRADEJINI_APP_SECRET    - OAuth app secret"
+log "  TRADEJINI_REDIRECT_URI  - OAuth redirect URI"
+log ""
 log "The service runs in SHADOW mode (logs actions, places no orders)."
-log "For live trading, modify the service ExecStart to pass an executor."
+log "For live trading, add executor to app.straddle_runner and include app creds."
