@@ -14,8 +14,8 @@ import time
 import datetime as dt
 from typing import Callable
 
-from . import tradejini as tj
-from .nxtradstream import NxtradStream
+import tradejini as tj
+from nxtradstream import NxtradStream
 
 WS_HOST = "api.tradejini.com"
 
